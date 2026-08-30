@@ -1,3 +1,6 @@
+---
+tags: CTFs
+---
 # OverTheWire's Natas - First 10 Challenges Writeups
 
 > I've recently been introduced to OverTheWire's Natas challenges. They seem fun to take a crack at and write about, so let's start with the first 10 probably easier ones.
