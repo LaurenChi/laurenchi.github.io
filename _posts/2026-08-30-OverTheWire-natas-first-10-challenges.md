@@ -18,8 +18,8 @@
 
 Going in I’m met with this very minimal site:  
 ![][image1]  
-Nothing to do here really. First thing that came to mind is inspecting with F12. Looking at the content we see our first password in a comment:  
-![][image2]  
+Nothing to do here really. First thing that came to mind is inspecting with `F12`. Looking at the content we see our first password in a comment:  
+![][image2]  `
 First step done\!
 
 ### Natas 1
@@ -28,7 +28,7 @@ We’re met with a weird limitation:
 ![][image3]  
 Right clicking pops up an alert window:  
 ![][image4]  
-We’re power users so we still inspect with F12 :)  
+We’re power users so we still inspect with `F12` :)  
 ![][image5]
 
 ### Natas 2
@@ -37,13 +37,13 @@ We’re power users so we still inspect with F12 :)
 Inspecting again:  
 ![][image7]  
 We see a PNG of a pixel is attached? I tried expanding the size of the image but nothing came of that. What can we do now?  
-I also notice there’s the before and after. I haven’t done web dev in a while so I looked up their purpose \- it allows us to insert content without needing HTML \- interesting. Let’s look up the CSS for this page and look up ::before and ::after  
+I also notice there’s the before and after. I haven’t done web dev in a while so I looked up their purpose \- it allows us to insert content without needing HTML \- interesting. Let’s look up the CSS for this page and look up `::before` and `::after`  
 ![][image8]  
 I decided to push the z-index thinking there may be something behind the box, and changed the background to black \-   
 ![][image9]  
-Now I’m pretty sure our next password is in between those lines \- but I’m not finding anything. I went back to Inspect to check if I missed anything, then tried looking at the img again. Knowing the image is sitting in files/pixel.png, we know there’s a folder called ‘files’. I tried changing the HTML to just pull the files and went on to Network where I saw the get request for files get a 301:  
+Now I’m pretty sure our next password is in between those lines \- but I’m not finding anything. I went back to Inspect to check if I missed anything, then tried looking at the img again. Knowing the image is sitting in `files/pixel.png`, we know there’s a folder called `files`. I tried changing the HTML to just pull the files and went on to Network where I saw the get request for files get a 301:  
 ![][image10]  
-Following the link we see the entire folder contents and a very curious txt file:  
+Following the link we see the entire folder contents and a very curious text file:  
 ![][image11]  
 Inside we find our creds\!  
 ![][image12]
@@ -54,9 +54,9 @@ Again we are met with the same dull page:
 ![][image13]  
 Inspecting again we find somewhat of a dare:  
 ![][image14]  
-We notice we still have these annoying before and after, but they still don’t seem to matter. I think the hint here is ‘Not even Google will find it’. I tried running ZAP proxy to see if it spots anything and it found the txt file robots.txt, unique to this level. Its content is as follows:  
+We notice we still have these annoying before and after, but they still don’t seem to matter. I think the hint here is ‘Not even Google will find it’. I tried running ZAP proxy to see if it spots anything and it found the text file `robots.txt`, unique to this level. Its content is as follows:  
 ![][image15]  
-Going to the url [http://natas3.natas.labs.overthewire.org/s3cr3t/](http://natas3.natas.labs.overthewire.org/s3cr3t/) we are again met with a users.txt file.  
+Going to the url [http://natas3.natas.labs.overthewire.org/s3cr3t/](http://natas3.natas.labs.overthewire.org/s3cr3t/) we are again met with a `users.txt` file.  
 ![][image16]  
 Success\!
 
@@ -73,7 +73,7 @@ Sending this in our request and sniffing with wireshark we find our next passwor
 
 Our new greeting:  
 ![][image20]  
-Skimming through the site in F12 we go to the cookies under ‘Storage’. There we can find a cookie named logged in with its value set to 0\. Changing it to 1 and refreshing presents us with our next password:  
+Skimming through the site in `F12` we go to the cookies under ‘Storage’. There we can find a cookie named logged in with its value set to 0\. Changing it to 1 and refreshing presents us with our next password:  
 ![][image21]  
 ![][image22]
 
@@ -83,8 +83,8 @@ We are finally introduced to a textbox:
 ![][image23]  
 I am pretty rusty with web attacks, but let’s check it out. We can also view the source code:  
 ![][image24]  
-The textbox is named ‘secret’, and we have a function here named array\_key\_exists that checks if the submit button has been pressed probably. Then we check if the value I put in the text box is equal to the $\_POST\[‘secret’\]. How do I make the program print out our secret? Or override the condition?  
-I struggled with figuring it out with no success, then I focused on the “includes/secret.inc”. Going there we find the secret:  
+The textbox is named ‘secret’, and we have a function here named array\_key\_exists that checks if the submit button has been pressed probably. Then we check if the value I put in the text box is equal to the `$\_POST\[‘secret’\]`. How do I make the program print out our secret? Or override the condition?  
+I struggled with figuring it out with no success, then I focused on the `includes/secret.inc`. Going there we find the secret:  
 ![][image25]  
 Pasting it back in the textbox we get:  
 ![][image26]
@@ -95,7 +95,7 @@ We have links\!
 ![][image27]  
 Whenever we click on any of the links the URL’s modified accordingly:  
 ![][image28]  
-So, let’s conduct a simple path traversal attack. We know the passwords are kept at /etc/natas\_webpass/natasX, X being the next level.  
+So, let’s conduct a simple path traversal attack. We know the passwords are kept at `/etc/natas\_webpass/natasX`, X being the next level.  
 Changing the page to this path shows us our next password:  
 ![][image29]
 
@@ -120,7 +120,7 @@ Entering anything modifies the url and prints out this output:
 The source code is as follows:  
 ![][image36]  
 If our input is not empty then a grep command passes through to the server. Great, let’s inject a command.  
-As an input I’ve provided: ; cat /etc/natas\_webpass/natas10  ; so the output is supposed to be our password:  
+As an input I’ve provided: `; cat /etc/natas\_webpass/natas10  ;` so the output is supposed to be our password:  
 ![][image37]
 
 [image1]: <data:image/png;base64,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>
