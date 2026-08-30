@@ -1,3 +1,8 @@
+---
+tags: CTFs
+---
+# CyberTalents Arson Challenge Writeup
+> CyberTalents has a few neat PCAP CTFs for us to solve
 We have a pretty big PCAP and we know a malicious script was executed. I started simply scrolling through the pcap to see if I notice anything odd straight away. So the stuff I point out won’t necessarily lead to the solution.  
 I saw weird UDP communication from the same source to destination port, **54915**, to a broadcast. Following this stream we see a randomized type 4 GUID and a hostname:  
 ![][image1]  
