@@ -234,7 +234,7 @@ if(array_key_exists("filename", $_POST)) {
 } else {
 ?>
 ```
-We are met with a challenge - only uploads of images go through. Whenever we upload anything else we get back a ` File is not an image` error. Fine.
+We are met with a challenge - only uploads of images go through. Whenever we upload anything else we get back a `File is not an image` error. Fine.
 It's interesting because even if I do change the extension to some type of image and upload it it still says it's not an image. So how does this `exif_imagetype` function find the extension? Let's google.
 <img width="575" height="173" alt="image" src="https://github.com/user-attachments/assets/ba7d6f54-2461-433f-b4d8-ca651f51e1b0" /><br/>
 Ok that's interesting - it tries to identify an image using a magic. So what is the magic of jpgs? It's apparently `FF D8 FF`. I've found an [online file hex editor](https://hexed.it/) and added these three bytes at the beginning of the webshell we used for natas12.
