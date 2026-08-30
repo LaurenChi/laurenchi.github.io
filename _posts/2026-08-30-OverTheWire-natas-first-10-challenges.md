@@ -1,4 +1,4 @@
-# Natas Levels Writeups
+# OverTheWire's Natas - First 10 Challenges Writeups
 
 ### Natas 0
 
