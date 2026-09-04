@@ -1,11 +1,11 @@
 @font-face {
   font-family: "OpenSans";
-  src: url("css/fonts/OpenSans-Regular.ttf");
+  src: url("fonts/OpenSans-Regular.ttf");
 }
 
 @font-face {
   font-family: "Ubuntu";
-  src: url("css/fonts/Ubuntu-Bold.ttf");
+  src: url("fonts/Ubuntu-Bold.ttf");
 }
 
 hr {
