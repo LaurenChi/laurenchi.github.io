@@ -4,6 +4,11 @@
 }
 
 @font-face {
+  font-family: "OpenSans-Regular";
+  src: url("fonts/OpenSans-Regular.ttf");
+}
+
+@font-face {
   font-family: "Ubuntu-Bold";
   src: url("fonts/Ubuntu-Bold.ttf");
 }
@@ -66,4 +71,10 @@ img {
 
 .site-title {
   font-family: Ubuntu-Bold;
+}
+
+code {
+  font-family: OpenSans-Regular;
+  color: #eba121;
+  text-shadow: rgba(255,162,0,0.9) 0px 0px 39px; 
 }
