@@ -1,11 +1,21 @@
+@font-face {
+  font-family: "OpenSans";
+  src: url("css/fonts/OpenSans-Regular.ttf");
+}
+
+@font-face {
+  font-family: "Ubuntu";
+  src: url("css/fonts/Ubuntu-Bold.ttf");
+}
+
 hr {
   margin-top: 30px;
   margin-bottom: 20px;
-  font-family: Roboto
+  font-family: Ubuntu
 }
 
 p {
-  font-family: Nunito
+  font-family: OpenSans
 }
 
 /* Post navigation links */
