@@ -1,21 +1,21 @@
 @font-face {
-  font-family: "OpenSans";
-  src: url("fonts/OpenSans-Regular.ttf");
+  font-family: "OpenSans-Light";
+  src: url("fonts/OpenSans-Light.ttf");
 }
 
 @font-face {
-  font-family: "Ubuntu";
+  font-family: "Ubuntu-Bold";
   src: url("fonts/Ubuntu-Bold.ttf");
 }
 
 hr {
   margin-top: 30px;
   margin-bottom: 20px;
-  font-family: Ubuntu
+  font-family: Ubuntu-Bold;
 }
 
 p {
-  font-family: OpenSans
+  font-family: OpenSans-Light;
 }
 
 /* Post navigation links */
