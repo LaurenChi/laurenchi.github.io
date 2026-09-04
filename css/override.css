@@ -1,6 +1,11 @@
 hr {
   margin-top: 30px;
   margin-bottom: 20px;
+  font-family: Roboto
+}
+
+p {
+  font-family: Nunito
 }
 
 /* Post navigation links */
@@ -11,6 +16,7 @@ hr {
 .post_navi-label {
   font-size: 0.8em;
   opacity: 0.5;
+  font-family: Roboto
 }
 
 .post_navi .post_navi-item {
@@ -45,6 +51,5 @@ hr {
 }
 
 img {
-  padding: 10px;
   margin: 10px;
 }
