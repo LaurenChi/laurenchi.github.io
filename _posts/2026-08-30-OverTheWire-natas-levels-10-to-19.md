@@ -510,22 +510,22 @@ function isValidAdminLogin() {
     return 0;
 }
 
-function isValidID($id) { /* {{{ */
+function isValidID($id) { /*  */
     return is_numeric($id);
 }
 
-function createID($user) { /* {{{ */
+function createID($user) { /*  */
     global $maxid;
     return rand(1, $maxid);
 }
 
-function debug($msg) { /* {{{ */
+function debug($msg) { /*  */
     if(array_key_exists("debug", $_GET)) {
         print "DEBUG: $msg<br>";
     }
 }
 
-function my_session_start() { /* {{{ */
+function my_session_start() { /*  */
     if(array_key_exists("PHPSESSID", $_COOKIE) and isValidID($_COOKIE["PHPSESSID"])) {
     if(!session_start()) {
         debug("Session start failed");
@@ -543,7 +543,7 @@ function my_session_start() { /* {{{ */
     return false;
 }
 
-function print_credentials() { /* {{{ */
+function print_credentials() { /*  */
     if($_SESSION and array_key_exists("admin", $_SESSION) and $_SESSION["admin"] == 1) {
     print "You are an admin. The credentials for the next level are:<br>";
     print "<pre>Username: natas19\n";
@@ -576,7 +576,7 @@ Now lets try and play with our form. Say I type in anything we get:
 <img width="652" height="117" alt="image" src="https://github.com/user-attachments/assets/c8953bb7-55b8-4235-8414-7dbebd9a2ab8" />
 And we'll see a `PHPSESSID` cookie with ID `418`, after trying a few more users this ID changes, and it's random, as we can see from this function:
 ```
-function createID($user) { /* {{{ */
+function createID($user) { /*  */
     global $maxid;
     return rand(1, $maxid);
 }
