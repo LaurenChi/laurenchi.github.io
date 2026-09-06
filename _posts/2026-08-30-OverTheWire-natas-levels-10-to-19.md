@@ -1,5 +1,20 @@
+---
+tags: CTFs
+---
 # OverTheWire's Natas - Challenges 10-19 Writeups
 > We're back solving these, and it sure does prove a tad more difficult.
+
+### Table of Contents
+- [Natas10](#Natas10)
+- [Natas11](#Natas11)
+- [Natas12](#Natas12)
+- [Natas13](#Natas13)
+- [Natas14](#Natas14)
+- [Natas15](#Natas15)
+- [Natas16](#Natas16)
+- [Natas17](#Natas17)
+- [Natas18](#Natas18)
+- [Natas19](#Natas19)
 
 ### Natas 10
 
