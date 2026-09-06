@@ -503,8 +503,8 @@ $maxid = 640; // 640 should be enough for everyone
 
 function isValidAdminLogin() { /* {{{ */
     if($_REQUEST["username"] == "admin") {
-    /* This method of authentication appears to be unsafe and has been disabled for now. */
-        //return 1;
+    # This method of authentication appears to be unsafe and has been disabled for now. 
+        # return 1;
     }
 
     return 0;
