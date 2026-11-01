@@ -121,5 +121,13 @@ if(array_key_exists("name", $_SESSION)) {
 Interesting functions are seemingly `myread()` and `mywrite()` - session data is kept in some path unknown to us, `session_save_path()`. Admin probably has a session file for themselves we should find out.
 We see `debug()` used in many parts of the code - including printing out `$filename` that we need. Appending `?debug` to the URL will show us whatever's printed:
 <img width="556" height="245" alt="image" src="https://github.com/user-attachments/assets/4f818bff-c86a-4fd7-8070-2532fd48a355" /><br/>
-So we know know sessions are saved under `/var/lib/php/sessions/`
-
+So we now know sessions are saved under `/var/lib/php/sessions/` and with the prefix `mysess_` and then my SID. From this we can probably assume the admin's session is also saved there. Providing a different name each time as the output only overwrites my existing session's file, as we see the same SID is returned.
+I wondered if I could insert some PHP code that will be saved under this file in order to create a webshell. I tried inserting the following as input:
+```
+<?php echo 'banans' ?>
+```
+Using `debug` again, this netted the following:
+<img width="574" height="98" alt="image" src="https://github.com/user-attachments/assets/62333273-4467-4da8-9f54-d6b6ea4bd2c4" /><br/>
+The length is still the entire command's length, but a value is missing in the name. Playing around with this for a while I couldn't figure out a way to use this to my adventure. Let's step back for a moment - I can also change the SID through my cookies, but we can use it for path traversal since characters other than the following are banned:
+`1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM-` 
+I found the inclusion of `-` odd.
